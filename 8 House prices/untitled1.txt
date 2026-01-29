@@ -1,0 +1,59 @@
+удалять одновременно, иначе удалятся лишние на каждой итерации
+
+Обрезка верхних значений, которые превышают 1.5 IQR от 0.75 процентиля:
+LotArea
+MasVnrArea
+TotalBsmtSF
+1stFlrSF
+GrLivArea
+OpenPorchSF
+Обрезка верхних значений выше 0.995 процентиля:
+BsmtFinSF1
+
+
+
+Q1 = X_temp[col].quantile(0.25)
+    Q3 = X_temp[col].quantile(0.75)
+    IQR = Q3 - Q1
+    upper = X_temp[col].quantile(0.995)
+
+    mask = X_temp[col] <= upper
+    X_temp_ = X_temp[mask]
+    y_temp_ = y_train_for_outlier[mask]
+
+
+ upper = Q3 + 1.5 * IQR
+
+ограничить y от 45 до 520 тысяч
+
+
+
+
+
+
+# Пример данных (замени на свои данные)
+np.random.seed(42)
+X_train = pd.DataFrame({'combined_quality_area': np.random.uniform(8, 11, 1000)})
+y_train_log = 11 + 0.2 * X_train['combined_quality_area'] + np.random.normal(0, 0.3, 1000)
+
+# Применяем KDE к признаку combined_quality_area
+kde = KernelDensity(kernel='gaussian', bandwidth=0.1).fit(X_train[['combined_quality_area']])
+
+# Вычисляем логарифм плотности
+log_density = kde.score_samples(X_train[['combined_quality_area']])
+
+# Преобразуем в веса (плотность)
+density_weights = np.exp(log_density)
+
+# Нормализуем веса, чтобы избежать слишком больших значений
+density_weights = density_weights / np.max(density_weights)
+
+# Добавляем минимальный вес, чтобы избежать нулевых весов (опционально)
+density_weights = np.maximum(density_weights, 1e-3)
+
+# Обучаем модель с весами
+model = Lasso(alpha=0.01)
+model.fit(X_train, y_train_log, sample_weight=density_weights)
+
+# Проверяем коэффициенты
+print("Коэффициенты модели:", model.coef_)
