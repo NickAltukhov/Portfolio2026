@@ -4,6 +4,10 @@
 # Python
 __pycache__/
 *.pyc
+venv/
+.env/
+.venv/
+env/
 
 # Data files
 *.csv
@@ -12,5 +16,8 @@ __pycache__/
 # OS
 .DS_Store
 Thumbs.db
+
+# Requirements
+requirements.txt
 
 *.pkl
